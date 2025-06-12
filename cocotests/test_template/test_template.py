@@ -26,13 +26,10 @@ async def w_task(dut):
     dut.w_data.value = 0
     await RisingEdge(dut.w_clk)
 
-    await FallingEdge(dut.w_clk)
-    dut.w_data.value = 1
-    await RisingEdge(dut.w_clk)
-    
-    await FallingEdge(dut.w_clk)
-    dut.w_data.value = 2
-    await RisingEdge(dut.w_clk)
+    for i in range(1, 11):
+        await FallingEdge(dut.w_clk)
+        dut.w_data.value = i
+        await RisingEdge(dut.w_clk)
 
     await FallingEdge(dut.w_clk)
     dut.w_en.value = 0
@@ -55,7 +52,7 @@ async def w_task_full(dut):
     dut.w_data.value = 0
     await RisingEdge(dut.w_clk)
 
-    for i in range(1, 11):
+    for i in range(1, 32):
         await FallingEdge(dut.w_clk)
         dut.w_data.value = i
         await RisingEdge(dut.w_clk)
@@ -69,7 +66,7 @@ async def r_task_empty(dut):
     dut.r_en.value = 1
     await RisingEdge(dut.r_clk)
 
-    for i in range(10):
+    for i in range(32):
         await FallingEdge(dut.r_clk)
         await RisingEdge(dut.r_clk)
 
@@ -91,12 +88,18 @@ async def template_test(dut):
     dut.rst.value = 1
     #await RisingEdge(dut.clk)
     await Timer(10, units="ns")
+    dut.rst.value = 0
     dut.w_en.value = 0
     dut.r_en.value = 0
 
-    task1 = cocotb.start_soon(w_task_full(dut))
+    #task1 = cocotb.start_soon(w_task_full(dut))
+    #await task1
+    #task2 = cocotb.start_soon(r_task_empty(dut))
+    #await task2
+
+    task1 = cocotb.start_soon(w_task(dut))
+    task2 = cocotb.start_soon(r_task(dut))
     await task1
-    task2 = cocotb.start_soon(r_task_empty(dut))
     await task2
 
     #await Timer(30, units="ns")

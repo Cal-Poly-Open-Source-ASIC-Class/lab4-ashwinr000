@@ -1,4 +1,4 @@
-module async_fifo #(parameter WIDTH=8, parameter DEPTH=8) (
+module async_fifo #(parameter WIDTH=8, parameter DEPTH=32) (
         input rst,
         input w_clk,
         input w_en,
@@ -15,23 +15,23 @@ module async_fifo #(parameter WIDTH=8, parameter DEPTH=8) (
     );
 
     logic [(WIDTH-1):0] fifo[0:(DEPTH-1)];
-    logic [$clog2(DEPTH)-1:0] w_ptr;
-    logic [$clog2(DEPTH)-1:0] r_ptr;
+    logic [$clog2(DEPTH):0] w_ptr;
+    logic [$clog2(DEPTH):0] r_ptr;
 
-    logic [$clog2(DEPTH)-1:0] w_ptr_gray;
-    logic [$clog2(DEPTH)-1:0] r_ptr_gray;
+    logic [$clog2(DEPTH):0] w_ptr_gray;
+    logic [$clog2(DEPTH):0] r_ptr_gray;
 
-    logic [$clog2(DEPTH)-1:0] w_ptr_gray_r1;
-    logic [$clog2(DEPTH)-1:0] r_ptr_gray_w1;
+    logic [$clog2(DEPTH):0] w_ptr_gray_r1;
+    logic [$clog2(DEPTH):0] r_ptr_gray_w1;
     
-    logic [$clog2(DEPTH)-1:0] w_ptr_gray_r2;
-    logic [$clog2(DEPTH)-1:0] r_ptr_gray_w2;
+    logic [$clog2(DEPTH):0] w_ptr_gray_r2;
+    logic [$clog2(DEPTH):0] r_ptr_gray_w2;
 
     assign r_ptr_gray = r_ptr ^ (r_ptr >> 1);
     assign w_ptr_gray = w_ptr ^ (w_ptr >> 1);
 
-    assign w_full = (w_ptr_gray[$clog2(DEPTH)-1:$clog2(DEPTH)-2] == ~r_ptr_gray_w2[$clog2(DEPTH)-1:$clog2(DEPTH)-2])
-				&& (w_ptr_gray[$clog2(DEPTH)-3:0] == r_ptr_gray_w2[$clog2(DEPTH)-3:0]);
+    assign w_full = (w_ptr_gray[$clog2(DEPTH):$clog2(DEPTH)-1] == ~r_ptr_gray_w2[$clog2(DEPTH):$clog2(DEPTH)-1])
+				&& (w_ptr_gray[$clog2(DEPTH)-2:0] == r_ptr_gray_w2[$clog2(DEPTH)-2:0]);
     assign r_empty = (w_ptr_gray_r2 == r_ptr_gray);
 
     always @(posedge w_clk or posedge rst)
@@ -44,7 +44,7 @@ module async_fifo #(parameter WIDTH=8, parameter DEPTH=8) (
         end
         else
         begin
-            if (w_en & ~w_full)
+            if (w_en && ~w_full)
             begin
                 fifo[w_ptr] <= w_data;
                 w_ptr <= w_ptr + 1;
@@ -70,7 +70,7 @@ module async_fifo #(parameter WIDTH=8, parameter DEPTH=8) (
         end 
         else
         begin
-            if (r_en & ~r_empty)
+            if (r_en && ~r_empty)
             begin
                 r_data <= fifo[r_ptr];
                 r_ptr <= r_ptr + 1;
